@@ -444,11 +444,13 @@ type mspan struct {
 
 	// sweep generation:
 	// if sweepgen == h->sweepgen - 2, the span needs sweeping
+	// 需要清扫
 	// if sweepgen == h->sweepgen - 1, the span is currently being swept
 	// if sweepgen == h->sweepgen, the span is swept and ready to use
 	// if sweepgen == h->sweepgen + 1, the span was cached before sweep began and is still cached, and needs sweeping
 	// if sweepgen == h->sweepgen + 3, the span was swept and then cached and is still cached
 	// h->sweepgen is incremented by 2 after every GC
+	// h->sweepgen 每次GC后递增2
 
 	sweepgen    uint32
 	divMul      uint16        // for divide by elemsize - divMagic.mul

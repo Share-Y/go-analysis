@@ -267,7 +267,7 @@ var writeBarrier struct {
 // gcBlackenEnabled is 1 if mutator assists and background mark
 // workers are allowed to blacken objects. This must only be set when
 // gcphase == _GCmark.
-// 如果变换器辅助后台标记, 工作者被允许对象标记为黑色, gcBlackenEnabled = 1, 必须仅在 gcphase == _GCmark 的情况下设置
+// 1-工作者被允许标记对象为黑色, gcBlackenEnabled = 1, 必须仅在 gcphase == _GCmark 的情况下设置
 var gcBlackenEnabled uint32
 
 const (
@@ -721,6 +721,7 @@ func (c *gcControllerState) enlistWorker() {
 
 // findRunnableGCWorker returns a background mark worker for _p_ if it
 // should be run. This must only be called when gcBlackenEnabled != 0.
+// findRunnableGCWorker 为 _p_ 返回一个应该运行的工作者, 这必须仅在 gcBlackenEnabled != 0 时调用。
 func (c *gcControllerState) findRunnableGCWorker(_p_ *p) *g {
 	if gcBlackenEnabled == 0 {
 		throw("gcControllerState.findRunnable: blackening not enabled")

@@ -250,6 +250,7 @@ func (c *mcache) allocLarge(size uintptr, needzero bool, noscan bool) *mspan {
 
 	// Put the large span in the mcentral swept list so that it's
 	// visible to the background sweeper.
+	// 将大对象span放入 mcentral 非空闲清扫列表中, 使其对后台清扫器可见
 	mheap_.central[spc].mcentral.fullSwept(mheap_.sweepgen).push(s)
 	s.limit = s.base() + size
 	heapBitsForAddr(s.base()).initSpan(s)

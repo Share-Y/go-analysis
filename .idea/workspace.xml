@@ -1,13 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7c82f588-2b57-4521-a988-b4fe54ddedf8" name="Default Changelist" comment="" />
+    <list default="true" id="7c82f588-2b57-4521-a988-b4fe54ddedf8" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/chan.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/chan.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/malloc.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/malloc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/map.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/map.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/mcache.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/mcache.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/mcentral.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/mcentral.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/mgc.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/mgc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/mgcmark.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/mgcmark.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/mheap.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/mheap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/panic.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/panic.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/proc.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/proc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/runtime1.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/runtime1.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/runtime2.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/runtime2.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/slice.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/slice.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/stubs.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/stubs.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/runtime/trace.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/runtime/trace.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="GOROOT" path="/usr/local/go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
   </component>
@@ -42,14 +62,46 @@
       <screen x="0" y="25" width="1792" height="1095" />
     </state>
     <state x="551" y="354" key="EditFileWatcherDialog/0.25.1792.1095/1792.25.1920.1055@0.25.1792.1095" timestamp="1628131333160" />
+    <state x="2540" y="338" key="FileChooserDialogImpl" timestamp="1628486348559">
+      <screen x="1792" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2540" y="338" key="FileChooserDialogImpl/0.0.1792.1120/1792.0.1920.1080@1792.0.1920.1080" timestamp="1628486348559" />
     <state x="405" y="208" key="SettingsEditor" timestamp="1628131336830">
       <screen x="0" y="25" width="1792" height="1095" />
     </state>
     <state x="405" y="208" key="SettingsEditor/0.25.1792.1095/1792.25.1920.1055@0.25.1792.1095" timestamp="1628131336830" />
-    <state x="597" y="327" width="597" height="490" key="find.popup" timestamp="1628153361655">
+    <state x="508" y="320" width="597" height="490" key="find.popup" timestamp="1629083407296">
       <screen x="0" y="25" width="1792" height="1095" />
     </state>
-    <state x="597" y="327" width="597" height="490" key="find.popup/0.25.1792.1095/1792.25.1920.1055@0.25.1792.1095" timestamp="1628153361655" />
-    <state x="597" y="327" width="597" height="490" key="find.popup/0.25.1792.1095@0.25.1792.1095" timestamp="1628078612067" />
+    <state x="597" y="309" width="597" height="502" key="find.popup/0.0.1792.1120/1792.0.1920.1080@0.0.1792.1120" timestamp="1628648749870" />
+    <state x="2432" y="298" width="640" height="562" key="find.popup/0.0.1792.1120/1792.0.1920.1080@1792.0.1920.1080" timestamp="1628491043542" />
+    <state x="597" y="309" width="597" height="582" key="find.popup/0.0.1792.1120@0.0.1792.1120" timestamp="1629040591626" />
+    <state x="508" y="320" width="597" height="490" key="find.popup/0.25.1792.1095/1792.25.1920.1055@0.25.1792.1095" timestamp="1629083407296" />
+    <state x="2432" y="316" width="640" height="530" key="find.popup/0.25.1792.1095/1792.25.1920.1055@1792.25.1920.1055" timestamp="1628849128160" />
+    <state x="597" y="327" width="597" height="550" key="find.popup/0.25.1792.1095@0.25.1792.1095" timestamp="1629038547639" />
+    <state x="2552" y="441" key="scopes" timestamp="1628486360808">
+      <screen x="1792" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2552" y="441" key="scopes/0.0.1792.1120/1792.0.1920.1080@1792.0.1920.1080" timestamp="1628486360808" />
+    <state x="2393" y="241" width="718" height="667" key="search.everywhere.popup" timestamp="1628497539595">
+      <screen x="1792" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2393" y="241" width="718" height="667" key="search.everywhere.popup/0.0.1792.1120/1792.0.1920.1080@1792.0.1920.1080" timestamp="1628497539595" />
+    <state x="561" y="269" width="670" height="676" key="search.everywhere.popup/0.25.1792.1095@0.25.1792.1095" timestamp="1628183217050" />
+    <state x="626" y="488" key="vcs.readOnlyHandler.ReadOnlyStatusDialog" timestamp="1628323928968">
+      <screen x="0" y="25" width="1792" height="1095" />
+    </state>
+    <state x="626" y="488" key="vcs.readOnlyHandler.ReadOnlyStatusDialog/0.25.1792.1095/1792.25.1920.1055@0.25.1792.1095" timestamp="1628323928968" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/src/runtime/runtime2.go</url>
+          <line>734</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

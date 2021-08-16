@@ -143,14 +143,13 @@ func growslice(et *_type, old slice, cap int) slice {
 
 	newcap := old.cap
 	doublecap := newcap + newcap
-	if cap > doublecap {
+	if cap > doublecap { // 期望容量比当前容量的两倍大时直接使用期望容量
 		newcap = cap
 	} else {
-		if old.cap < 1024 {
+		if old.cap < 1024 { // 切片容量小于1024, 直接翻倍
 			newcap = doublecap
-		} else {
-			// Check 0 < newcap to detect overflow
-			// and prevent an infinite loop.
+		} else { // 大于1024, 每次 + 25%
+			// 检查 newcap>0, 以检测溢出, 防止无限循环
 			for 0 < newcap && newcap < cap {
 				newcap += newcap / 4
 			}

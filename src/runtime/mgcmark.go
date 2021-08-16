@@ -384,6 +384,9 @@ func markrootSpans(gcw *gcWork, shard int) {
 // gp must be the calling user gorountine.
 //
 // This must be called with preemption enabled.
+// gcAssistAlloc 执行 GC 工作以使 gp 的辅助债务为正数
+// gp 必须是调用用户的gorountine
+// 必须在启用抢占的情况下调用
 func gcAssistAlloc(gp *g) {
 	// Don't assist in non-preemptible contexts. These are
 	// generally fragile and won't allow the assist to block.

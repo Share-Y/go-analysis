@@ -118,7 +118,7 @@ func (c *mcentral) cacheSpan() *mspan {
 			break
 		}
 		if atomic.Load(&s.sweepgen) == sg-2 && atomic.Cas(&s.sweepgen, sg-2, sg-1) {
-			// 我们获得了span的所有权, 让我们清扫完并使用它
+			// 我们获得了span的所有权, 让我们清扫完更新清扫标记数并使用它
 			s.sweep(true)
 			goto havespan
 		}

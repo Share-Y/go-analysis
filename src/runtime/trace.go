@@ -109,7 +109,7 @@ const (
 var trace struct {
 	lock          mutex       // protects the following members
 	lockOwner     *g          // to avoid deadlocks during recursive lock locks
-	enabled       bool        // when set runtime traces events
+	enabled       bool        // when set runtime traces events // true-可以运行时跟踪事件时
 	shutdown      bool        // set when we are waiting for trace reader to finish after setting enabled to false
 	headerWritten bool        // whether ReadTrace has emitted trace header
 	footerWritten bool        // whether ReadTrace has emitted trace footer

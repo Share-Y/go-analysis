@@ -89,18 +89,24 @@ const (
 	// Each bucket (including its overflow buckets, if any) will have either all or none of its
 	// entries in the evacuated* states (except during the evacuate() method, which only happens
 	// during map writes and thus no one else can observe the map during that time).
-	emptyRest      = 0 // this cell is empty, and there are no more non-empty cells at higher indexes or overflows.
-	emptyOne       = 1 // this cell is empty
-	evacuatedX     = 2 // key/elem is valid.  Entry has been evacuated to first half of larger table.
-	evacuatedY     = 3 // same as above, but evacuated to second half of larger table.
+	// 空的 cell，也是初始时 bucket 的状态
+	emptyRest = 0 // this cell is empty, and there are no more non-empty cells at higher indexes or overflows.
+	// 空的 cell，已被搬迁
+	emptyOne = 1 // this cell is empty
+	// 已被搬迁, key 都在新 bucket 前半部分
+	evacuatedX = 2 // key/elem is valid.  Entry has been evacuated to first half of larger table.
+	// 已被搬迁, key 都在新 bucket 后半部分
+	evacuatedY = 3 // same as above, but evacuated to second half of larger table.
+	// 已被搬迁, 桶都空了
 	evacuatedEmpty = 4 // cell is empty, bucket is evacuated.
-	minTopHash     = 5 // minimum tophash for a normal filled cell.
+	// tophash 的最小正常值
+	minTopHash = 5 // minimum tophash for a normal filled cell.
 
 	// flags
-	iterator     = 1 // there may be an iterator using buckets
-	oldIterator  = 2 // there may be an iterator using oldbuckets
-	hashWriting  = 4 // a goroutine is writing to the map
-	sameSizeGrow = 8 // the current map growth is to a new map of the same size
+	iterator     = 1 // there may be an iterator using buckets // 可能有一个使用桶的迭代器
+	oldIterator  = 2 // there may be an iterator using oldbuckets // 可能有一个使用 old桶的迭代器
+	hashWriting  = 4 // a goroutine is writing to the map	// 一个goroutine正在对map进行写操作
+	sameSizeGrow = 8 // the current map growth is to a new map of the same size	// 等量扩容中
 
 	// sentinel bucket ID for iterator checks
 	noCheck = 1<<(8*sys.PtrSize) - 1
@@ -191,9 +197,10 @@ func bucketMask(b uint8) uintptr {
 }
 
 // tophash calculates the tophash value for hash.
+// 只取高8位算
 func tophash(hash uintptr) uint8 {
 	top := uint8(hash >> (sys.PtrSize*8 - 8))
-	if top < minTopHash {
+	if top < minTopHash { // 如果小于最小正常值, 加上最小正常值
 		top += minTopHash
 	}
 	return top
@@ -391,6 +398,9 @@ func makeBucketArray(t *maptype, b uint8, dirtyalloc unsafe.Pointer) (buckets un
 // the key is not in the map.
 // NOTE: The returned pointer may keep the whole map live, so don't
 // hold onto it for very long.
+// mapaccess1 返回一个指向 h[key] 的指针。
+// 如果key不在地图中, 也不会返回 nil, 而是将返回对 elem 类型的零对象的引用
+// 注意: 返回的指针可能会使整个map保持存活，所以要即时释放
 func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
 	if raceenabled && h != nil {
 		callerpc := getcallerpc()
@@ -401,25 +411,32 @@ func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
 	if msanenabled && h != nil {
 		msanread(key, t.key.size)
 	}
+	// 返回一个零对象的引用
 	if h == nil || h.count == 0 {
 		if t.hashMightPanic() {
 			t.hasher(key, 0) // see issue 23734
 		}
 		return unsafe.Pointer(&zeroVal[0])
 	}
+	// 正在被另一个goroutine写
 	if h.flags&hashWriting != 0 {
 		throw("concurrent map read and map write")
 	}
+	// 计算哈希值，并且加入 hash0 引入随机性
 	hash := t.hasher(key, uintptr(h.hash0))
+	// 比如 B=5, 那 m 就是31, 二进制是全 1
+	// 求 bucket num 时, 将 hash 与 m 相与
+	// 达到 bucket num 由 hash 的低 8 位决定的效果
 	m := bucketMask(h.B)
 	b := (*bmap)(add(h.buckets, (hash&m)*uintptr(t.bucketsize)))
 	if c := h.oldbuckets; c != nil {
+		// 搬迁过程中, 先遍历old
 		if !h.sameSizeGrow() {
 			// There used to be half as many buckets; mask down one more power of two.
 			m >>= 1
 		}
 		oldb := (*bmap)(add(c, (hash&m)*uintptr(t.bucketsize)))
-		if !evacuated(oldb) {
+		if !evacuated(oldb) { // 如果old还没有被搬迁
 			b = oldb
 		}
 	}
@@ -829,6 +846,7 @@ func mapiterinit(t *maptype, h *hmap, it *hiter) {
 	}
 
 	// decide where to start
+	// 从哪里开始呢
 	r := uintptr(fastrand())
 	if h.B > 31-bucketCntBits {
 		r += uintptr(fastrand()) << 31

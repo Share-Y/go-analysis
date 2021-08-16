@@ -843,7 +843,7 @@ var zerobase uintptr
 
 // nextFreeFast returns the next free object if one is quickly available.
 // Otherwise it returns 0.
-// 如果下一个可用对象很快可用, 则nextFreeFast返回下一个可用对象, 否则返回0
+// nextFreeFast 取下一个很快可用的可用对象, 否则返回0
 func nextFreeFast(s *mspan) gclinkptr {
 	theBit := sys.Ctz64(s.allocCache) // Is there a free object in the allocCache?
 	if theBit < 64 {
@@ -1080,6 +1080,7 @@ func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 			(*[2]uint64)(x)[1] = 0
 			// See if we need to replace the existing tiny block with the new one
 			// based on amount of remaining free space.
+			// 基于剩余可用空间的数量, 看看我们是否需要用新的块替换现有的小块
 			if size < c.tinyoffset || c.tiny == 0 {
 				c.tiny = uintptr(x)
 				c.tinyoffset = size
@@ -1125,6 +1126,9 @@ func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 		// as containing nothing at all (as if it were unused space at the end of
 		// a malloc block caused by size rounding).
 		// The defer arg areas are scanned as part of scanstack.
+		// 如果分配 defer+arg 块，现在我们已经分配了一个大到足以容纳所有东西的span, 将"请求"的内存大小缩小到defer头大小,
+		// 以便 GC bitmap 将arg记录为根本不包含任何内容（就好像它是由于大小舍入导致的 malloc 块末尾的未使用空间)
+		// defer arg 区域作为 被扫描栈 的一部分进行扫描。
 		if typ == deferType {
 			dataSize = unsafe.Sizeof(_defer{})
 		}
@@ -1133,6 +1137,7 @@ func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 			// Array allocation. If there are any
 			// pointers, GC has to scan to the last
 			// element.
+			// 申请对象是数组, 如果有任何指针, GC必须扫描到最后的元素
 			if typ.ptrdata != 0 {
 				scanSize = dataSize - typ.size + typ.ptrdata
 			}
@@ -1154,6 +1159,7 @@ func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 	// All slots hold nil so no scanning is needed.
 	// This may be racing with GC so do it atomically if there can be
 	// a race marking the bit.
+	// 在GC阶段, 新对象直接标记成黑色
 	if gcphase != _GCoff {
 		gcmarknewobject(span, uintptr(x), size, scanSize)
 	}

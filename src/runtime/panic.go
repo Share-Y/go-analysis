@@ -313,6 +313,9 @@ func deferprocStack(d *_defer) {
 // Small malloc size classes >= 16 are the multiples of 16: 16, 32, 48, 64, 80, 96, 112, 128, 144, ...
 // Each P holds a pool for defers with small arg sizes.
 // Assign defer allocations to pools by rounding to 16, to match malloc size classes.
+// 小对象的分配大小 >=16 时是 16 的倍数：16, 32, 48, 64, 80, 96, 112, 128, 144, ...
+// 每个 P 都持有一个由小对象的defer组成的池
+// 通过四舍五入到16将defer分配给池，以匹配需要分配的大小类。
 
 const (
 	deferHeaderSize = unsafe.Sizeof(_defer{})
@@ -434,6 +437,7 @@ func newdefer(siz int32) *_defer {
 // stack map when this is called.
 //
 //go:nosplit
+// 释放给定的 defer 此调用后无法使用defer, 这一定不能扩容栈, 因为在调用时可能会有一个没有栈映射的帧。
 func freedefer(d *_defer) {
 	if d._panic != nil {
 		freedeferpanic()
@@ -442,25 +446,29 @@ func freedefer(d *_defer) {
 		freedeferfn()
 	}
 	if !d.heap {
+		// 堆 defer 不释放
 		return
 	}
+	// 计算defer属于什么大小类型
 	sc := deferclass(uintptr(d.siz))
 	if sc >= uintptr(len(p{}.deferpool)) {
+		// 不在p的defer池中 不释放
 		return
 	}
 	pp := getg().m.p.ptr()
-	if len(pp.deferpool[sc]) == cap(pp.deferpool[sc]) {
+	if len(pp.deferpool[sc]) == cap(pp.deferpool[sc]) { // 容量和长度相等 放不下了
 		// Transfer half of local cache to the central cache.
 		//
 		// Take this slow path on the system stack so
 		// we don't grow freedefer's stack.
+		// 将当前缓存的一半转移到中央缓存, 在系统栈上采用这个缓慢的方法, 这样我们就不会扩容空闲defer的栈
 		systemstack(func() {
 			var first, last *_defer
-			for len(pp.deferpool[sc]) > cap(pp.deferpool[sc])/2 {
+			for len(pp.deferpool[sc]) > cap(pp.deferpool[sc])/2 { // 当长度大于容量的一般时进行转移
 				n := len(pp.deferpool[sc])
 				d := pp.deferpool[sc][n-1]
 				pp.deferpool[sc][n-1] = nil
-				pp.deferpool[sc] = pp.deferpool[sc][:n-1]
+				pp.deferpool[sc] = pp.deferpool[sc][:n-1] // 减少一个持有的defer
 				if first == nil {
 					first = d
 				} else {
@@ -477,6 +485,7 @@ func freedefer(d *_defer) {
 
 	// These lines used to be simply `*d = _defer{}` but that
 	// started causing a nosplit stack overflow via typedmemmove.
+	// 初始化一个新的defer添加到defer池子中
 	d.siz = 0
 	d.started = false
 	d.openDefer = false
@@ -488,6 +497,7 @@ func freedefer(d *_defer) {
 	// d._panic and d.fn must be nil already.
 	// If not, we would have called freedeferpanic or freedeferfn above,
 	// both of which throw.
+	// d中的fn和panic一定已经是nil了, 如果不是 我们就抛出了 freedeferpanic 或 freedeferfn(上方) 错误了
 	d.link = nil
 
 	pp.deferpool[sc] = append(pp.deferpool[sc], d)
@@ -495,13 +505,16 @@ func freedefer(d *_defer) {
 
 // Separate function so that it can split stack.
 // Windows otherwise runs out of stack space.
+// 分离函数, 以便它可以拆分栈. 否则 Windows 会耗尽栈空间,
 func freedeferpanic() {
 	// _panic must be cleared before d is unlinked from gp.
+	// panic 必须在d与gp断开连接前清除掉
 	throw("freedefer with d._panic != nil")
 }
 
 func freedeferfn() {
 	// fn must be cleared before d is unlinked from gp.
+	// fn 必须在d与gp断开连接前清除掉
 	throw("freedefer with d.fn != nil")
 }
 
@@ -807,6 +820,9 @@ func readvarintUnsafe(fd unsafe.Pointer) (uint32, unsafe.Pointer) {
 // d. It normally processes all active defers in the frame, but stops immediately
 // if a defer does a successful recover. It returns true if there are no
 // remaining defers to run in the frame.
+// runOpenDeferFrame 在 d 指定的帧中运行活跃的开放编码defer
+// 它通常来处理帧中所有活跃的defer, 但如果defer成功恢复, 则立即停止
+// 如果帧中没有剩余的defer要运行, 则返回 true
 func runOpenDeferFrame(gp *g, d *_defer) bool {
 	done := true
 	fd := d.fd
@@ -882,7 +898,9 @@ func reflectcallSave(p *_panic, fn, arg unsafe.Pointer, argsize uint32) {
 }
 
 // The implementation of the predeclared function panic.
+// panic 的实现
 func gopanic(e interface{}) {
+	// 获取当前g的指针
 	gp := getg()
 	if gp.m.curg != gp {
 		print("panic: ")
@@ -916,15 +934,18 @@ func gopanic(e interface{}) {
 	var p _panic
 	p.arg = e
 	p.link = gp._panic
+	// 记录发生的panic (链表 当前panic1 之前持有panic2 gc._panic = panic1 -> panic1.link = panic2)
 	gp._panic = (*_panic)(noescape(unsafe.Pointer(&p)))
 
 	atomic.Xadd(&runningPanicDefers, 1)
 
 	// By calculating getcallerpc/getcallersp here, we avoid scanning the
 	// gopanic frame (stack scanning is slow...)
+	// 通过这里计算getcallerpc/getcallersp，我们避免了扫描gopanic帧（栈扫描很慢……）
 	addOneOpenDeferFrame(gp, getcallerpc(), unsafe.Pointer(getcallersp()))
 
 	for {
+		// 没有defer了 退出
 		d := gp._defer
 		if d == nil {
 			break
@@ -933,16 +954,19 @@ func gopanic(e interface{}) {
 		// If defer was started by earlier panic or Goexit (and, since we're back here, that triggered a new panic),
 		// take defer off list. An earlier panic will not continue running, but we will make sure below that an
 		// earlier Goexit does continue running.
-		if d.started {
+		// 如果 defer 是由之前的 panic 或 Goexit 启动的(并且，因为我们回到这里，这触发了一个新的 panic), 把 defer 从列表中删除.
+		// 较早的panic不会继续运行, 但我们将在下面确保较早的 Goexit 确实继续运行
+		if d.started { // 如果 defer被标记为已经开始 (联系下面的代码一起看)
 			if d._panic != nil {
-				d._panic.aborted = true
+				d._panic.aborted = true // 将defer的panic标记为已中止
 			}
-			d._panic = nil
+			d._panic = nil // 清空defer的panic
 			if !d.openDefer {
 				// For open-coded defers, we need to process the
 				// defer again, in case there are any other defers
 				// to call in the frame (not including the defer
 				// call that caused the panic).
+				// 对于开放编码的defer, 我们需要再次处理defer, 以防在帧中有任何其他defer调用(不包括导致恐慌的defer调用)
 				d.fn = nil
 				gp._defer = d.link
 				freedefer(d)
@@ -953,11 +977,13 @@ func gopanic(e interface{}) {
 		// Mark defer as started, but keep on list, so that traceback
 		// can find and update the defer's argument frame if stack growth
 		// or a garbage collection happens before reflectcall starts executing d.fn.
+		// 将 defer 标记为已启动, 但保留在列表中, 以便如果在反射调用开始执行 d.fn 之前发生堆栈增长或垃圾收集, 则回溯可以找到并更新 defer 的参数框架。
 		d.started = true
 
 		// Record the panic that is running the defer.
 		// If there is a new panic during the deferred call, that panic
 		// will find d in the list and will mark d._panic (this panic) aborted.
+		// 记录运行defer的panic, 如果在defer调用期间出现新的panic，将在列表中找到 d 并将标记 d._panic 中止。
 		d._panic = (*_panic)(noescape(unsafe.Pointer(&p)))
 
 		done := true
@@ -973,6 +999,7 @@ func gopanic(e interface{}) {
 		p.argp = nil
 
 		// reflectcall did not panic. Remove d.
+		// reflectcall 没有panic, 移除d的panic
 		if gp._defer != d {
 			throw("bad defer entry in panic")
 		}
@@ -980,9 +1007,10 @@ func gopanic(e interface{}) {
 
 		// trigger shrinkage to test stack copy. See stack_test.go:TestStackPanic
 		//GC()
-
+		// 触发收缩以测试栈复制 参见 stack_test.go:TestStackPanic
 		pc := d.pc
 		sp := unsafe.Pointer(d.sp) // must be pointer so it gets adjusted during stack copy
+		// sp必须是指针, 以便在堆栈复制期间进行调整
 		if done {
 			d.fn = nil
 			gp._defer = d.link
@@ -1070,8 +1098,10 @@ func gopanic(e interface{}) {
 // writes outgoing function call arguments.
 //go:nosplit
 //go:noinline
+// 返回调用者所在的位置, 写入传出函数调用参数
 func getargp(x int) uintptr {
 	// x is an argument mainly so that we can return its address.
+	// x 是一个参数主要是我们可以返回他的地址
 	return uintptr(noescape(unsafe.Pointer(&x)))
 }
 
