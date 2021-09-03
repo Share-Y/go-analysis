@@ -1048,6 +1048,7 @@ func valueInterface(v Value, safe bool) interface{} {
 
 // InterfaceData returns the interface v's value as a uintptr pair.
 // It panics if v's Kind is not Interface.
+// InterfaceData 以 一对 uintptr 对的形式返回接口v的值, 如果v不是 Interface, 它会发生panic
 func (v Value) InterfaceData() [2]uintptr {
 	// TODO: deprecate this
 	v.mustBe(Interface)

@@ -5286,6 +5286,7 @@ func sysmon() {
 		} else if idle > 50 { // start doubling the sleep after 1ms...
 			delay *= 2
 		}
+		// 趋于稳定 10ms
 		if delay > 10*1000 { // up to 10ms
 			delay = 10 * 1000
 		}
@@ -5764,7 +5765,7 @@ func globrunqget(_p_ *p, max int32) *g {
 	}
 
 	sched.runqsize -= n
-	s
+
 	gp := sched.runq.pop()
 	n--
 	for ; n > 0; n-- {

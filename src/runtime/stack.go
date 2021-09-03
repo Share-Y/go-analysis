@@ -110,7 +110,7 @@ const (
 	//            == 3: logging of per-word updates
 	//            == 4: logging of per-word reads
 	stackDebug       = 0
-	stackFromSystem  = 0 // allocate stacks from system memory instead of the heap
+	stackFromSystem  = 0 // allocate stacks from system memory instead of the heap // 从系统内存而不是堆上分配
 	stackFaultOnFree = 0 // old stacks are mapped noaccess to detect use after free
 	stackPoisonCopy  = 0 // fill stack that should not be accessed with garbage, to detect bad dereferences during copy
 	stackNoCache     = 0 // disable per-P small stack caches
@@ -328,6 +328,7 @@ func stackalloc(n uint32) stack {
 	// Stackalloc must be called on scheduler stack, so that we
 	// never try to grow the stack during the code that stackalloc runs.
 	// Doing so would cause a deadlock (issue 1547).
+	// Stackalloc 必须在调度程序g0栈上调用，防止在 stackalloc 运行的代码期间尝试栈增长, 导致死锁
 	thisg := getg()
 	if thisg != thisg.m.g0 {
 		throw("stackalloc not on scheduler stack")
@@ -339,6 +340,7 @@ func stackalloc(n uint32) stack {
 		print("stackalloc ", n, "\n")
 	}
 
+	// 系统内存分配
 	if debug.efence != 0 || stackFromSystem != 0 {
 		n = uint32(alignUp(uintptr(n), physPageSize))
 		v := sysAlloc(uintptr(n), &memstats.stacks_sys)
@@ -352,7 +354,7 @@ func stackalloc(n uint32) stack {
 	// If we need a stack of a bigger size, we fall back on allocating
 	// a dedicated span.
 	var v unsafe.Pointer
-	if n < _FixedStack<<_NumStackOrders && n < _StackCacheSize {
+	if n < _FixedStack<<_NumStackOrders && n < _StackCacheSize { // 小于32kb
 		order := uint8(0)
 		n2 := n
 		for n2 > _FixedStack {
@@ -365,10 +367,12 @@ func stackalloc(n uint32) stack {
 			// or procresize. Just get a stack from the global pool.
 			// Also don't touch stackcache during gc
 			// as it's flushed concurrently.
+			// 没有p的时候从全局池中获取栈内存
 			lock(&stackpool[order].item.mu)
 			x = stackpoolalloc(order)
 			unlock(&stackpool[order].item.mu)
 		} else {
+			// 从线程缓存的栈空闲列表中获取
 			c := thisg.m.p.ptr().mcache
 			x = c.stackcache[order].list
 			if x.ptr() == nil {
@@ -393,7 +397,7 @@ func stackalloc(n uint32) stack {
 		unlock(&stackLarge.lock)
 
 		lockWithRankMayAcquire(&mheap_.lock, lockRankMheap)
-
+		// stackLarge 用完了 从堆上申请
 		if s == nil {
 			// Allocate a new stack from the heap.
 			s = mheap_.allocManual(npage, spanAllocStack)
@@ -998,6 +1002,7 @@ func newstack() {
 		if !canPreemptM(thisg.m) {
 			// Let the goroutine keep running for now.
 			// gp->preempt is set, so it will be preempted next time.
+			// 让 goroutine 暂时继续运行 因为设置了gp->preempt 所以下次会被抢占
 			gp.stackguard0 = gp.stack.lo + _StackGuard
 			gogo(&gp.sched) // never return
 		}

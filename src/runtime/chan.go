@@ -561,6 +561,8 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 		// directly from sender. Otherwise, receive from head of queue
 		// and add sender's value to the tail of the queue (both map to
 		// the same buffer slot because the queue is full).
+		// 没有缓冲区或缓冲区里没有数据, 就从阻塞发送队列头部取发送者的数据
+		//
 		recv(c, sg, ep, func() { unlock(&c.lock) }, 3)
 		return true, true
 	}
